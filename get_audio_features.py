@@ -26,7 +26,7 @@ def search_input():
 
 def search_tracks(token, title=None, artist=None, limit=20):
     search_url = 'https://api.spotify.com/v1/search'
-    if not title or artist:
+    if not (title or artist):
         print('Error: please specify title or artist of the track')
     
     search_header = {'Authorization': f"Bearer {token}"}
@@ -44,11 +44,15 @@ def search_tracks(token, title=None, artist=None, limit=20):
         params = search_params,
         headers = search_header
     ).json()
+    
+    if len(response['tracks']['items']) == 0:
+        return None
+    
     track_list = {
         'track_name': [], 
         'track_id': [], 
         'artist_name': []
-    }
+    }    
     for i in response['tracks']['items']:
         track_list['track_name'].append(i['name'])
         track_list['track_id'].append(i['id'])
@@ -77,7 +81,6 @@ def get_audio_features(token, track_id):
         url = url,
         headers = get_af_header
     ).json()
-    ipdb.set_trace()
     features = [
         'acousticness', 'danceability', 'energy', 'instrumentalness', 'key', 
         'liveness', 'loudness', 'mode', 'speechiness', 'tempo', 'time_signature', 'valence'
@@ -89,6 +92,12 @@ if __name__ == '__main__':
     token = authentication()
     title, artist = search_input()
     track_list = search_tracks(token=token, title=title, artist=artist)
-    track_id = choose_right_track(track_list)
-    audio_features = get_audio_features(token, track_id)
-    print(audio_features)
+    if track_list == None:
+        print("No track matched your search. Please try again")
+    else:
+        if len(track_list['track_id']) > 1:
+            track_id = choose_right_track(track_list)
+        else:
+            track_id = track_list['track_id']
+        audio_features = get_audio_features(token, track_id)
+        print(audio_features)
