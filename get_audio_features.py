@@ -3,6 +3,7 @@ import os
 import base64
 import pandas as pd
 import ipdb
+import streamlit as st
 
 def authentication():
     auth_url = 'https://accounts.spotify.com/api/token'
@@ -72,6 +73,23 @@ def choose_right_track(track_list):
     correct_num = int(input(
             "\nThe tracks above matched your search; please type the number of the track you'd like to use: "
         ))-1
+    return track_list['track_id'][correct_num]    
+
+def choose_right_track_sl(track_list):
+    index = list(range(1, len(track_list['track_id'])+1))
+    df = pd.DataFrame(
+        track_list, 
+        columns=['track_name', 'artist_name'],
+        index=index
+        ).rename(
+            columns={'track_name': 'Track name', 'artist_name': 'Artist name(s)'}
+        )
+    correct_num = int(st.selectbox(
+        "The below tracks matched your search. Please select one",
+        index
+    ))-1
+    st.dataframe(df)
+
     return track_list['track_id'][correct_num]    
 
 def get_audio_features(token, track_id):
