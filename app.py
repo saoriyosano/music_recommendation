@@ -1,9 +1,7 @@
 import streamlit as st
-from get_audio_features import authentication, search_tracks, choose_right_track_sl, get_audio_features
+from get_audio_features import authentication_sl, search_tracks, choose_right_track_sl, get_audio_features
 
 st.markdown('# 🎶 Borderless Music Recommendation 🌏')
-
-
 
 title = st.text_input(
     "Title", 
@@ -18,7 +16,7 @@ artist = st.text_input(
 )
 
 if st.button("Search", key = "search"):
-    token = authentication()
+    token = authentication_sl()
     track_list = search_tracks(token, title, artist, limit=50)
     if track_list == None:
         st.error("No tracks matched your search. Please try again with different key words", icon = "🙉")
