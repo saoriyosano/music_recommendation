@@ -4,37 +4,7 @@ import base64
 import pandas as pd
 import ipdb
 import streamlit as st
-
-def authentication():
-    auth_url = 'https://accounts.spotify.com/api/token'
-    auth_data = {
-        'grant_type': 'client_credentials',
-        'client_id': os.environ.get('CLIENT_ID'),
-        'client_secret': os.environ.get('CLIENT_SECRET')
-    }
-
-    response = requests.post(
-        url = auth_url,
-        data = auth_data
-    ).json()
-    
-    return response['access_token']
-
-def authentication_sl():
-    auth_url = 'https://accounts.spotify.com/api/token'
-    auth_data = {
-        'grant_type': 'client_credentials',
-        'client_id': st.secrets['CLIENT_ID'],
-        'client_secret': st.secrets['CLIENT_SECRET']
-    }
-
-    response = requests.post(
-        url = auth_url,
-        data = auth_data
-    ).json()
-    
-    return response['access_token']
-
+from authenticate import authenticate
 
 def search_input():
     title = input("Title of the track: ")
@@ -69,7 +39,8 @@ def search_tracks(token, title=None, artist=None, limit=20):
         'track_name': [], 
         'track_id': [], 
         'artist_name': []
-    }    
+    }
+    
     for i in response['tracks']['items']:
         track_list['track_name'].append(i['name'])
         track_list['track_id'].append(i['id'])
@@ -100,12 +71,11 @@ def choose_right_track_sl(track_list):
         ).rename(
             columns={'track_name': 'Track name', 'artist_name': 'Artist name(s)'}
         )
+    st.dataframe(df)
     correct_num = int(st.selectbox(
-        "The below tracks matched your search. Please select one",
+        "The above tracks matched your search. Please select one",
         index
     ))-1
-    st.dataframe(df)
-
     return track_list['track_id'][correct_num]    
 
 def get_audio_features(token, track_id):
@@ -119,11 +89,18 @@ def get_audio_features(token, track_id):
         'acousticness', 'danceability', 'energy', 'instrumentalness', 'key', 
         'liveness', 'loudness', 'mode', 'speechiness', 'tempo', 'time_signature', 'valence'
     ]
-    af_vector = [response[feature] for feature in features]
+    norm_features = ['key', 'loudness', 'tempo', 'time_signature']
+    minmax_dict = {
+        'key': (0, 11, 11),
+        'loudness': (-60.0, 6.275000095367432, 66.27500009536743),
+        'tempo': (0.0, 249.98699951171875, 249.98699951171875),
+        'time_signature': (0, 5, 5)
+    }
+    af_vector = [(response[feature]-minmax_dict[feature][0])/minmax_dict[feature][2] if feature in norm_features else response[feature] for feature in features]
     return af_vector
     
 if __name__ == '__main__':
-    token = authentication()
+    token = authenticate()
     title, artist = search_input()
     track_list = search_tracks(token=token, title=title, artist=artist)
     if track_list == None:
